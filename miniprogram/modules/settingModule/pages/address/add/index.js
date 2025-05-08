@@ -1,7 +1,5 @@
 // 导入 async-validator 对参数进行验证
 import Schema from 'async-validator'
-// 导入接口 API 函数
-import {reqAddAddress, reqAddressInfo, reqUpdateAddress} from '../../../api/address'
 
 // 建表字段如下，还有一个id
 Page({
@@ -40,9 +38,20 @@ Page({
     if (!valid) return
 
     // 如果 valid 等于 true，说明验证成功调用新增的接口实现新增收货地址功能
-    const res = this.addressId
-      ? await reqUpdateAddress(params)
-      : await reqAddAddress(params)
+    let res;
+    if (this.addressId) {
+      // 调用 updateAddress 云函数
+      res = await wx.cloud.callFunction({
+        name: 'updateAddress',
+        data: params
+      });
+    } else {
+      // 调用 addAddress 云函数
+      res = await wx.cloud.callFunction({
+        name: 'addAddress',
+        data: params
+      });
+    }
 
     if (res.code === 200) {
       // 返回到收货地址列表页面
@@ -130,11 +139,26 @@ Page({
       title: '更新收货地址'
     })
 
-    // 调用接口 API 函数，来获取需要更新的收货地址详情
-    const {data} = await reqAddressInfo(id)
+    try {
+      // 调用 getAddressDetail 云函数，传递 id 以获取地址详情
+      const res = await wx.cloud.callFunction({
+        name: 'getAddressDetail',
+        data: {id}
+      });
 
-    // 将详情数据进行赋值，赋值以后，页面上就会回显要更新的地址信息
-    this.setData(data)
+      // 检查云函数返回的结果
+      if (res.result && res.result.success) {
+        // 将详情数据进行赋值，赋值以后，页面上就会回显要更新的地址信息
+        this.setData(res.result.data);
+      } else {
+        // 处理错误情况，例如显示错误提示
+        toast({title: '获取地址信息失败'})
+      }
+    } catch (error) {
+      // 捕获并处理调用云函数时的错误
+      toast({title: '获取地址信息失败'})
+      console.error('Error calling getAddressDetail:', error);
+    }
   },
 
   onLoad(options) {

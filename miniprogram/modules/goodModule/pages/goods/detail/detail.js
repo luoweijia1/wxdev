@@ -1,7 +1,6 @@
-import { reqGoodsInfo } from '../../../api/goods'
-import { reqAddCart, reqCartList } from '@/api/cart'
+import {reqAddCart} from '@/api/cart'
 // 导入创建的 behavior
-import { userBehavior } from '../../../behaviors/userBehavior'
+import {userBehavior} from '../../../behaviors/userBehavior'
 
 Page({
   behaviors: [userBehavior],
@@ -34,7 +33,7 @@ Page({
 
   // 点击关闭弹框时触发的回调
   onClose() {
-    this.setData({ show: false })
+    this.setData({show: false})
   },
 
   // 监听是否更改了购买数量
@@ -47,7 +46,7 @@ Page({
   // 弹框的确定按钮触发的事件处理函数
   async handlerSubmit() {
     // 解构相关的数据
-    const { openId, count, blessing, buyNow } = this.data
+    const {openId, count, blessing, buyNow} = this.data
     // 获取商品的 id
     const goodsId = this.goodsId
 
@@ -63,10 +62,10 @@ Page({
     // 如果 buyNow === 0，说明是加入购物车，
     // 如果 buyNow === 1，说明是立即购买
     if (buyNow === 0) {
-      const res = await reqAddCart({ goodsId, count, blessing })
+      const res = await reqAddCart({goodsId, count, blessing})
 
       if (res.code === 200) {
-        wx.toast({ title: '加入购物车成功' })
+        wx.toast({title: '加入购物车成功'})
 
         // 在加入购物车成功以后，需要重新计算购物车商品的购买数量
         this.getCartCount()
@@ -91,11 +90,28 @@ Page({
 
   // 获取商品详情的数据
   async getGoodsInfo() {
-    const { data: goodsInfo } = await reqGoodsInfo(this.goodsId)
+    try {
+      // 调用 getGoodDetail 云函数来获取商品详情
+      const res = await wx.cloud.callFunction({
+        name: 'getGoodDetail',
+        data: {id: this.goodsId} // 传递商品 ID 作为参数
+      });
 
-    this.setData({
-      goodsInfo
-    })
+      // 检查云函数返回的结果
+      if (res.result && res.result.success) {
+        // 将商品详情数据进行赋值
+        this.setData({
+          goodsInfo: res.result.data
+        });
+      } else {
+        // 处理错误情况，例如显示错误提示
+        toast({title: '获取商品信息失败'})
+      }
+    } catch (error) {
+      // 捕获并处理调用云函数时的错误
+      toast({title: '获取商品信息失败'})
+      console.error('Error calling getGoodDetail:', error);
+    }
   },
 
   // 计算购物车商品的数量
@@ -106,7 +122,28 @@ Page({
 
     // 如果存在 openId，说明用户进行了登录，获取购物车列表的数据
     // 然后计算得出购买的数量
-    const res = await reqCartList()
+    try {
+      // 调用 listCarts 云函数来获取购物车列表
+      const res = await wx.cloud.callFunction({
+        name: 'listCarts',
+        data: {} // 如果需要传递参数，可以在这里添加
+      });
+
+      // 检查云函数返回的结果
+      if (res.result && res.result.success) {
+        // 将购物车列表数据进行赋值
+        this.setData({
+          cartList: res.result.data
+        });
+      } else {
+        // 处理错误情况，例如显示错误提示
+        toast({title: '获取购物车列表失败'})
+      }
+    } catch (error) {
+      // 捕获并处理调用云函数时的错误
+      toast({title: '获取购物车列表失败'})
+      console.error('Error calling listCarts:', error);
+    }
 
     // 判断购物车中是否存在商品
     if (res.data.length !== 0) {
@@ -146,5 +183,6 @@ Page({
   },
 
   // 能够把小程序分享到朋友圈
-  onShareTimeline() {}
+  onShareTimeline() {
+  }
 })

@@ -1,5 +1,3 @@
-import { reqGoodsList } from '../../../api/goods'
-
 Page({
   // 页面的初始数据
   data: {
@@ -23,7 +21,28 @@ Page({
     this.data.isLoading = true
 
     // 发送请求
-    const { data } = await reqGoodsList(this.data.requestData)
+    try {
+      // 调用 listGoods 云函数来获取商品列表
+      const res = await wx.cloud.callFunction({
+        name: 'listGoods',
+        data: this.data.requestData // 传递请求参数
+      });
+
+      // 检查云函数返回的结果
+      if (res.result && res.result.success) {
+        // 将商品列表数据进行赋值
+        this.setData({
+          goodsList: res.result.data
+        });
+      } else {
+        // 处理错误情况，例如显示错误提示
+        toast({title: '获取商品列表失败'})
+      }
+    } catch (error) {
+      // 捕获并处理调用云函数时的错误
+      toast({title: '获取商品列表失败'})
+      console.error('Error calling listGoods:', error);
+    }
 
     // 在请求结束以后，需要将 isLoading 设置为 false，表示请求已经结束
     this.data.isLoading = false
@@ -37,8 +56,8 @@ Page({
   // 监听到页面的上拉操作
   onReachBottom() {
     // 解构数据
-    const { goodsList, total, requestData, isLoading } = this.data
-    const { page } = requestData
+    const {goodsList, total, requestData, isLoading} = this.data
+    const {page} = requestData
 
     // 判断 isLoading 状态
     // 如果状态等于 true，说明请求正在发送中，如果请求正在发送中，就不请求下一页数据
@@ -55,7 +74,7 @@ Page({
 
     // 页码 + 1
     this.setData({
-      requestData: { ...this.data.requestData, page: page + 1 }
+      requestData: {...this.data.requestData, page: page + 1}
     })
 
     // 重新获取商品列表
@@ -69,7 +88,7 @@ Page({
       goodsList: [],
       total: 0,
       isFinish: false,
-      requestData: { ...this.data.requestData, page: 1 }
+      requestData: {...this.data.requestData, page: 1}
     })
 
     // 使用最新的参数发送请求
@@ -88,8 +107,10 @@ Page({
   },
 
   // 转发功能，转发给好友、群聊
-  onShareAppMessage() {},
+  onShareAppMessage() {
+  },
 
   // 能够把小程序分享到朋友圈
-  onShareTimeline() {}
+  onShareTimeline() {
+  }
 })

@@ -42,9 +42,28 @@ Page({
 
   // 获取收货地址列表数据
   async getAddressList() {
-    // const { data: addressList } = await reqAddressList()
-    // 修改为云函数
-    this.setData({addressList})
+    try {
+      // 调用 listAddress 云函数来获取地址列表
+      const res = await wx.cloud.callFunction({
+        name: 'listAddress',
+        data: {} // 如果需要传递参数，可以在这里添加
+      });
+
+      // 检查云函数返回的结果
+      if (res.result && res.result.success) {
+        // 将地址列表数据进行赋值
+        this.setData({
+          addressList: res.result.data
+        });
+      } else {
+        // 处理错误情况，例如显示错误提示
+        toast({title: '获取地址列表失败'})
+      }
+    } catch (error) {
+      // 捕获并处理调用云函数时的错误
+      toast({title: '获取地址列表失败'})
+      console.error('Error calling listAddress:', error);
+    }
   },
 
   // 更新收货地址
