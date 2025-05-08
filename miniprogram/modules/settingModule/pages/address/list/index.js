@@ -1,6 +1,4 @@
-// 导入接口 API 函数
-import { reqAddressList, reqDelAddress } from '../../../api/address'
-import { swipeCellBehavior } from '@/behaviors/swipeCell'
+import {swipeCellBehavior} from '@/behaviors/swipeCell'
 
 // 获取应用实例
 const app = getApp()
@@ -16,18 +14,18 @@ Page({
   // 删除收货地址
   async delAddress(event) {
     // 解构传递的 id
-    const { id } = event.currentTarget.dataset
+    const {id} = event.currentTarget.dataset
 
     // 询问用户是否确认删除
     const modalRes = await wx.modal({
       content: '您确认删除该收货地址吗 ?'
     })
 
-    // 如果用户确认删除，需要调用接口 API
     // 同时需要给用户提示，并且要重新获取收货地址列表
     if (modalRes) {
-      await reqDelAddress(id)
-      wx.toast({ title: '收货地址删除成功' })
+      // 修改为云函数
+      // await reqDelAddress(id)
+      wx.toast({title: '收货地址删除成功'})
       this.getAddressList()
     }
   },
@@ -35,7 +33,7 @@ Page({
   // 去编辑页面
   toEdit(event) {
     // 获取要更新的收货地址 id
-    const { id } = event.currentTarget.dataset
+    const {id} = event.currentTarget.dataset
 
     wx.navigateTo({
       url: `/modules/settingModule/pages/address/add/index?id=${id}`
@@ -44,9 +42,9 @@ Page({
 
   // 获取收货地址列表数据
   async getAddressList() {
-    const { data: addressList } = await reqAddressList()
-
-    this.setData({ addressList })
+    // const { data: addressList } = await reqAddressList()
+    // 修改为云函数
+    this.setData({addressList})
   },
 
   // 更新收货地址

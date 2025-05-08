@@ -1,19 +1,15 @@
 // pages/login/login.js
 
-// 导入封装通用模块方法
-import { toast } from '@/utils/extendApi'
 // 导入本地存储 api
-import { setStorage } from '@/utils/storage'
-// 导入接口 API 函数
-import { reqLogin, reqUserInfo } from '@/api/user'
+import { setStorage } from '@/utils/storage';
 
 // 导入 ComponentWithStore 方法
-import { ComponentWithStore } from 'mobx-miniprogram-bindings'
+import { ComponentWithStore } from 'mobx-miniprogram-bindings';
 // 导入 store 对象
-import { userStore } from '@/stores/userstore'
+import { userStore } from '@/stores/userstore';
 
 // 导入防抖函数
-import { debounce } from 'miniprogram-licia'
+import { debounce } from 'miniprogram-licia';
 
 // 使用 ComponentWithStore 方法替换 Component 方法构造页面
 ComponentWithStore({
@@ -27,36 +23,33 @@ ComponentWithStore({
   methods: {
     // 授权登录
     login: debounce(async function () {
-        try {
-            // 调用云函数
-            const cloudFunctionRes = await new Promise((resolve, reject) => {
-                wx.cloud.callFunction({
-                    name: "login",
-                    success: (res) => {
-                        resolve(res);
-                    },
-                    fail: (err) => {
-                        reject(err);
-                    }
-                });
-            });
+      try {
+        // 调用云函数
+        const cloudFunctionRes = await wx.cloud.callFunction({
+          name: "login"
+        });
 
-            // 判断云函数调用结果
-            if (cloudFunctionRes.result.data && cloudFunctionRes.result.data._openid) {
-                console.log('登录成功', cloudFunctionRes.result);
-
-                setStorage('openId', cloudFunctionRes.result.data._openid)
-                this.setOpenId(cloudFunctionRes.result.data._openid)
-                setStorage('userInfo', cloudFunctionRes.result.data)
-                this.setUserInfo(cloudFunctionRes.result.data)
-                wx.navigateBack()
-            } else {
-                console.log('登录失败', cloudFunctionRes);
-            }
-
-        } catch (error) {
-            console.error('登录过程中出现错误', error);
+        // 判断云函数调用结果
+        const { data } = cloudFunctionRes.result;
+        if (data && data._openid) {
+          console.log('登录成功', cloudFunctionRes.result);
+          this.handleLoginSuccess(data);
+          wx.navigateBack();
+        } else {
+          console.log('登录失败', cloudFunctionRes);
         }
-    }, 500)
+
+      } catch (error) {
+        console.error('登录过程中出现错误', error);
+      }
+    }, 500),
+
+    // 处理登录成功
+    handleLoginSuccess(data) {
+      setStorage('openId', data._openid);
+      this.setOpenId(data._openid);
+      setStorage('userInfo', data);
+      this.setUserInfo(data);
+    }
   }
-})
+});

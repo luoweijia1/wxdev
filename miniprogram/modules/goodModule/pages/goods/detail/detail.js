@@ -47,12 +47,12 @@ Page({
   // 弹框的确定按钮触发的事件处理函数
   async handlerSubmit() {
     // 解构相关的数据
-    const { token, count, blessing, buyNow } = this.data
+    const { openId, count, blessing, buyNow } = this.data
     // 获取商品的 id
     const goodsId = this.goodsId
 
     // 判断用户是否进行了登录，如果没有登录，需要跳转到登录页面
-    if (!token) {
+    if (!openId) {
       wx.navigateTo({
         url: '/pages/login/login'
       })
@@ -100,11 +100,11 @@ Page({
 
   // 计算购物车商品的数量
   async getCartCount() {
-    // 使用 token 来判断用户是否进行了登录，
-    // 如果没有 token，说明用户没有登录，就不执行后续的逻辑
-    if (!this.data.token) return
+    // 使用 openId 来判断用户是否进行了登录，
+    // 如果没有 openId，说明用户没有登录，就不执行后续的逻辑
+    if (!this.data.openId) return
 
-    // 如果存在 token，说明用户进行了登录，获取购物车列表的数据
+    // 如果存在 openId，说明用户进行了登录，获取购物车列表的数据
     // 然后计算得出购买的数量
     const res = await reqCartList()
 

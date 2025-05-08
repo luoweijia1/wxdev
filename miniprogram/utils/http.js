@@ -13,14 +13,14 @@ const instance = new WxRequest({
 
 // 添加请求拦截器 (在请求发送之前对请求参数进行新增或者修改)
 instance.interceptors.request = (config) => {
-  // 在实际开发中，有一些接口需要使用访问令牌 token
-  // 访问令牌 token 通常是存储到本地
-  // 需要先从本地获取到存储的 token
-  const token = getStorage('token')
+  // 在实际开发中，有一些接口需要使用访问令牌 openId
+  // 访问令牌 openId 通常是存储到本地
+  // 需要先从本地获取到存储的 openId
+  const openId = getStorage('openId')
 
-  // 如果本地存在 token，这时候就需要在请求头中添加 token 字段
-  if (token) {
-    config.header['token'] = token
+  // 如果本地存在 openId，这时候就需要在请求头中添加 openId 字段
+  if (openId) {
+    config.header['openId'] = openId
   }
 
   // 在发送请求之前做些什么
@@ -58,7 +58,7 @@ instance.interceptors.response = async (response) => {
   // 需要开发者对返回的参数进行逻辑判断
   // 需要对后端返回的业务状态码进行判断
   // 业务状态码 === 200，接口调用成功，服务器成功返回了数据
-  // 业务状态码 === 208，没有 token 或者 token 失效，需要让用户重新进行登录
+  // 业务状态码 === 208，没有 openId 或者 openId 失效，需要让用户重新进行登录
   // 业务状态码既不等于 200，也不等于 208，说明出现了其他异常，需要给用户统一进行提示
   switch (data.code) {
     case 200:
@@ -72,7 +72,7 @@ instance.interceptors.response = async (response) => {
       })
 
       if (res) {
-        // 既然用户需要重新进行登录，就需要把之前用户存储的信息(过期的 token) 进行清除
+        // 既然用户需要重新进行登录，就需要把之前用户存储的信息(过期的 openId) 进行清除
         clearStorage()
 
         wx.navigateTo({

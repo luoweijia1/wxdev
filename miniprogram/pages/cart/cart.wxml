@@ -1,7 +1,7 @@
 <view bindtap="onSwipeCellPage">
   <!-- 购物车列表结构 -->
   <view
-    wx:if="{{ token && cartList.length }}"
+    wx:if="{{ openId && cartList.length }}"
     class="container goods-wrap"
     bindtap="onSwipeCellPageTap"
   >
@@ -66,7 +66,7 @@
     <navigator
       url="/pages/index/index"
       open-type="switchTab"
-      wx:if="{{ token && cartList.length === 0 }}"
+      wx:if="{{ openId && cartList.length === 0 }}"
     >
       <van-button round type="danger" class="bottom-button">去购物</van-button>
     </navigator>

@@ -17,7 +17,7 @@
       </view>
     </view>
 
-    <!-- 登录以后得面板 -->
+    <!-- 登录后面板 -->
     <view wx:else class="user-container section">
       <view class="avatar-container">
         <image src="{{ userInfo.avatarurl ? userInfo.avatarurl : '/assets/images/avatar.png' }}"></image>

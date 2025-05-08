@@ -37,13 +37,12 @@ exports.main = async () => {
     } else {
       // 否则往 users 表中加入一条数据
       const newUser = {
-        _openid:OPENID,
+        _openid: OPENID,
         nickname: "",
-        shoppingID: "",
-        avatarurl: "",
+        fileID: "",
         lastLoginTime: new Date().toISOString()
       };
-      const addRes = await usersCollection.add({
+      await usersCollection.add({
         data: newUser
       });
       return {

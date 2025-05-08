@@ -25,7 +25,7 @@ ComponentWithStore({
   // 让页面和 Store 对象建立关联
   storeBindings: {
     store: userStore,
-    fields: ['token']
+    fields: ['openId']
   },
 
   // 定义计算属性
@@ -175,10 +175,10 @@ ComponentWithStore({
     // 展示文案同时获取购物车列表数据
     async showTipGetList() {
       // 解构数据
-      const { token } = this.data
+      const { openId } = this.data
 
       // 判断用户是否进行了登录
-      if (!token) {
+      if (!openId) {
         this.setData({
           emptyDes: '您尚未登录，点击登录获取更多权益',
           cartList: []
