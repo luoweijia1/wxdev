@@ -1,30 +1,43 @@
-import { reqIndexData } from '@/api/index'
-
 Page({
   // 初始化数据
   data: {
     bannerList: [], // 轮播图数据
     categoryList: [], // 商品导航数据
-    activeList: [], // 活动渲染区域
-    hotList: [], // 人气推荐
-    guessList: [], // 猜你喜欢
-    loading: true // 是否显示骨架屏，默认显示
+    advertiseList: [], // 广告渲染区域
+    loading: false // 是否显示骨架屏，后面看看怎么处理，不会的话体验差点也没办法
   },
 
   // 获取首页数据
   async getIndexData() {
-    // 调用接口 API 函数，获取数据
-    // reqIndexData 内部使用的 all 或者 Promise.all
-    // 返回的是一个数组，是按照接口的调用顺序返回的
-    const res = await reqIndexData()
+    const bannerRes = await wx.cloud.callFunction({
+      name: 'getListData',
+      data: { type: 'banner' } // 假设传入 type 参数来区分不同的数据请求
+    });
+
+    const bannerList = bannerRes.result && bannerRes.result.success ? bannerRes.result.data : [];
+
+    // 调用云函数获取 categoryList
+    const categoryRes = await wx.cloud.callFunction({
+      name: 'getListData',
+      data: { type: 'category' }
+    });
+
+    const categoryList = categoryRes.result && categoryRes.result.success ? categoryRes.result.data : [];
+
+    // 调用云函数获取 advertiseList
+    const advertiseRes = await wx.cloud.callFunction({
+      name: 'getListData',
+      data: { type: 'advertise' }
+    });
+
+    const advertiseList = advertiseRes.result && advertiseRes.result.success ? advertiseRes.result.data : [];
+
 
     // 需要对数据进行赋值，在赋值的时候，一定要注意索引
     this.setData({
-      bannerList: res[0].data,
-      categoryList: res[1].data,
-      activeList: res[2].data,
-      guessList: res[3].data,
-      hotList: res[4].data,
+      bannerList: bannerList,
+      categoryList: categoryList,
+      advertiseList: advertiseList,
       loading: false
     })
   },
@@ -36,8 +49,10 @@ Page({
   },
 
   // 转发功能，转发给好友、群聊
-  onShareAppMessage() {},
+  onShareAppMessage() {
+  },
 
   // 能够把小程序分享到朋友圈
-  onShareTimeline() {}
+  onShareTimeline() {
+  }
 })

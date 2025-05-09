@@ -1,6 +1,3 @@
-// 导入封装的 接口 API 函数
-import { reqCategoryData } from '@/api/category'
-
 Page({
   // 初始化数据
   data: {
@@ -10,8 +7,7 @@ Page({
 
   // 实现一级分类的切换效果
   updateActive(event) {
-    // console.log(event.currentTarget.dataset)
-    const { index } = event.currentTarget.dataset
+    const {index} = event.currentTarget.dataset
 
     this.setData({
       activeIndex: index
@@ -20,8 +16,8 @@ Page({
 
   // 获取商品分类的数据
   async getCategoryData() {
-    const res = await reqCategoryData()
-
+    // const res = await reqCategoryData()
+    // 此处获取分类列表，以及每个分类下的商品，使用goodlist包裹
     if (res.code === 200) {
       this.setData({
         categoryList: res.data

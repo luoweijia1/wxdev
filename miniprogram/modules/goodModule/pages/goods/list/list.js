@@ -10,8 +10,7 @@ Page({
     requestData: {
       page: 1, // 页码
       limit: 10, // 每页请求的条数
-      category1Id: '', // 一级分类 id
-      category2Id: '' // 二级分类 id
+      categoryId: '', // 分类 id
     }
   },
 

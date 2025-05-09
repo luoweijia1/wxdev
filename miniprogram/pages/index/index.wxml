@@ -18,33 +18,17 @@
     <!-- 广告区域 -->
     <view class="adver">
       <view class="adver-left">
-        <navigator
-          url="/modules/goodModule/pages/goods/list/list?category2Id={{ activeList[0].category2Id }}"
-        >
-          <image src="{{ activeList[0].imageUrl }}" mode="widthFix" />
-        </navigator>
+        <image src="{{ activeList[0].imageUrl }}" mode="widthFix" />
       </view>
 
       <view class="adver-right">
         <view>
-          <navigator
-            url="/modules/goodModule/pages/goods/list/list?category2Id={{ activeList[1].category2Id }}"
-          >
-            <image src="{{ activeList[1].imageUrl }}" mode="widthFix" />
-          </navigator>
+          <image src="{{ activeList[1].imageUrl }}" mode="widthFix" />
         </view>
         <view>
-          <navigator
-            url="/modules/goodModule/pages/goods/list/list?category2Id={{ activeList[2].category2Id }}"
-          >
-            <image src="{{ activeList[2].imageUrl }}" mode="widthFix" />
-          </navigator>
+          <image src="{{ activeList[2].imageUrl }}" mode="widthFix" />
         </view>
       </view>
     </view>
-
-    <!-- 商品列表 -->
-    <goods-list title="猜你喜欢" list="{{ guessList }}"></goods-list>
-    <goods-list title="人气推荐" list="{{ hotList }}"></goods-list>
   </view>
 </view>

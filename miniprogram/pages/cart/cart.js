@@ -187,14 +187,34 @@ ComponentWithStore({
         return
       }
 
-      // 如果用户进行了登录，就需要获取购物车列表数据
-      const { code, data: cartList } = await reqCartList()
+      try {
+        // 调用 listCarts 云函数来获取购物车列表
+        const res = await wx.cloud.callFunction({
+          name: 'listCarts', // 替换为你的云函数名称
+          data: {} // 如果云函数需要参数，可以在这里传递
+        });
 
-      if (code === 200) {
-        this.setData({
-          cartList,
-          emptyDes: cartList.length === 0 && '还没有添加商品，快去添加吧～'
-        })
+        // 检查云函数返回的结果
+        if (res.result && res.result.success) {
+          const cartList = res.result.data;
+          // 处理购物车列表数据
+          this.setData({
+            cartList,
+            emptyDes: cartList.length === 0 && '还没有添加商品，快去添加吧～'
+          });
+        } else {
+          // 处理错误情况，例如显示错误提示
+          wx.showToast({
+            title: '获取购物车列表失败',
+            icon: 'none'
+          });
+        }
+      } catch (error) {
+        // 捕获并处理调用云函数时的错误
+        wx.showToast({
+          title: '获取购物车列表失败',
+          icon: 'none'
+        });
       }
     },
 
@@ -209,9 +229,34 @@ ComponentWithStore({
       })
 
       if (modalRes) {
-        await reqDelCartGoods(id)
+        try {
+          // 调用 deleteCart 云函数来删除商品
+          const res = await wx.cloud.callFunction({
+            name: 'deleteCart', // 替换为你的云函数名称
+            data: { id } // 传递商品的 id
+          });
 
-        this.showTipGetList()
+          // 检查云函数返回的结果
+          if (res.result && res.result.success) {
+            wx.showToast({
+              title: '商品删除成功',
+              icon: 'success'
+            });
+            this.showTipGetList(); // 更新购物车列表
+          } else {
+            wx.showToast({
+              title: '删除商品失败',
+              icon: 'none'
+            });
+          }
+        } catch (error) {
+          // 捕获并处理调用云函数时的错误
+          wx.showToast({
+            title: '删除商品失败',
+            icon: 'none'
+          });
+          console.error('Error calling deleteCart:', error);
+        }
       }
     },
 
