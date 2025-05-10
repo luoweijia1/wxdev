@@ -62,15 +62,15 @@
       </view>
       <view class="after-scale-item">
         <view class="iconfont icon-dizhiguanli"></view>
-        <text>鲜花制作完毕情况下暂不支持退款</text>
+        <text>面包制作完毕情况下暂不支持退款</text>
       </view>
       <view class="after-scale-item">
         <view class="iconfont icon-zhangben"></view>
-        <text>鲜花可以提前7-15天预订重大节假日不支持定时配送</text>
+        <text>面包可以提前7-15天预订重大节假日不支持定时配送</text>
       </view>
     </view>
 
     <!-- 底部面板 -->
-    <view class="info-footer"> 尚硅谷技术支持 </view>
+    <view class="info-footer"> 酵醒面包 </view>
   </view>
 </view>

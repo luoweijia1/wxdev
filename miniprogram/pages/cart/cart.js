@@ -1,19 +1,11 @@
-import { ComponentWithStore } from 'mobx-miniprogram-bindings'
-import { userStore } from '@/stores/userstore'
-// 导入接口 API 函数
-import {
-  reqCartList,
-  reqUpdateChecked,
-  reqCheckAllStatus,
-  reqAddCart,
-  reqDelCartGoods
-} from '@/api/cart'
+import {ComponentWithStore} from 'mobx-miniprogram-bindings'
+import {userStore} from '@/stores/userstore'
 
 // 导入 debounce 防抖方法
-import { debounce } from 'miniprogram-licia'
+import {debounce} from 'miniprogram-licia'
 
 // 导入让删除滑块自动弹回的 behavior
-import { swipeCellBehavior } from '@/behaviors/swipeCell'
+import {swipeCellBehavior} from '@/behaviors/swipeCell'
 
 // 导入 miniprogram-computed 提供的 behavior
 const computedBehavior = require('miniprogram-computed').behavior
@@ -88,7 +80,7 @@ ComponentWithStore({
       const newBuyNum = event.detail > 200 ? 200 : event.detail
 
       // 获取商品的 id、索引、之前的购买数量
-      const { id, index, oldbuynum } = event.target.dataset
+      const {id, index, oldbuynum} = event.target.dataset
 
       // 使用正则验证用户输入的购买数量，是否是 1-200 之间的正整数
       const reg = /^([1-9]|[1-9]\d|1\d{2}|200)$/
@@ -113,10 +105,13 @@ ComponentWithStore({
       if (disCount === 0) return
 
       // 如果购买数量发生了改变，需要调用接口，传递差值
-      const res = await reqAddCart({ goodsId: id, count: disCount })
+      const res = await wx.cloud.callFunction({
+        name: 'addCart', // 替换为你的云函数名称
+        data: {goodsId: id, count: disCount} // 传递商品的 id 和数量
+      });
 
       // 如果服务器更新购买数量成功，需要更新本地的购买数量
-      if (res.code === 200) {
+      if (res.result && res.result.success) {
         this.setData({
           [`cartList[${index}].count`]: newBuyNum,
           // 如果购买数量发生了变化，需要让当前商品变成选中的状态
@@ -128,54 +123,94 @@ ComponentWithStore({
     // 实现全选和全不选效果
     async selectAllStatus(event) {
       // 获取全选按钮的选中状态
-      const { detail } = event
+      const {detail} = event
       // 需要将选中的状态转换后接口需要使用的数据
       const isChecked = detail ? 1 : 0
 
-      // 调用接口，实现全选和全不选功能
-      const res = await reqCheckAllStatus(isChecked)
+      try {
+        // 调用 updateCartCheck 云函数来更新购物车中所有商品的选中状态
+        const res = await wx.cloud.callFunction({
+          name: 'updateCartCheck', // 替换为你的云函数名称
+          data: {isChecked} // 传递全选或全不选的状态
+        });
 
-      if (res.code === 200) {
-        // this.showTipGetList()
+        // 检查云函数返回的结果
+        if (res.result && res.result.success) {
+          // 对购物车列表数据进行深拷贝
+          const newCartList = JSON.parse(JSON.stringify(this.data.cartList));
+          newCartList.forEach((item) => (item.isChecked = isChecked));
 
-        // 对购物车列表数据进行深拷贝
-        const newCartList = JSON.parse(JSON.stringify(this.data.cartList))
-        newCartList.forEach((item) => (item.isChecked = isChecked))
+          // 对 cartList 进行赋值，驱动视图更新
+          this.setData({
+            cartList: newCartList
+          });
 
-        // 对 cartList 进行赋值，驱动视图更新
-        this.setData({
-          cartList: newCartList
-        })
+          wx.showToast({
+            title: isChecked ? '全选成功' : '取消全选成功',
+            icon: 'success'
+          });
+        } else {
+          wx.showToast({
+            title: '更新状态失败',
+            icon: 'none'
+          });
+        }
+      } catch (error) {
+        // 捕获并处理调用云函数时的错误
+        wx.showToast({
+          title: '更新状态失败',
+          icon: 'none'
+        });
+        console.error('Error calling updateCartCheck:', error);
       }
     },
 
     // 更新商品的购买状态
     async updateChecked(event) {
       // 获取最新的购买状态
-      const { detail } = event
+      const {detail} = event
       // 获取传递的 商品 ID 以及 索引
-      const { id, index } = event.target.dataset
+      const {id, index} = event.target.dataset
       // 将最新的购买状态转换成后端接口需要使用的 0 和 1
       const isChecked = detail ? 1 : 0
 
-      // 调用接口更新服务器的购买状态
-      const res = await reqUpdateChecked(id, isChecked)
+      try {
+        // 调用 updateCartCheck 云函数来更新购物车商品的选中状态
+        const res = await wx.cloud.callFunction({
+          name: 'updateCartCheck', // 替换为你的云函数名称
+          data: {id, isChecked} // 传递商品的 id 和选中状态
+        });
 
-      if (res.code === 200) {
-        // 服务器更新购买状态成功以后，获取最新的购物车列表数据更新状态
-        // this.showTipGetList()
-
-        // 通过更新本地的数据来更新页面的购买状态
-        this.setData({
-          [`cartList[${index}].isChecked`]: isChecked
-        })
+        // 检查云函数返回的结果
+        if (res.result && res.result.success) {
+          // 通过更新本地的数据来更新页面的购买状态
+          this.setData({
+            [`cartList[${index}].isChecked`]: isChecked
+          });
+          wx.showToast({
+            title: '状态更新成功',
+            icon: 'success'
+          });
+        } else {
+          wx.showToast({
+            title: '更新状态失败',
+            icon: 'none'
+          });
+        }
+      } catch (error) {
+        // 捕获并处理调用云函数时的错误
+        wx.showToast({
+          title: '更新状态失败',
+          icon: 'none'
+        });
+        console.error('Error calling updateCartCheck:', error);
       }
     },
 
     // 展示文案同时获取购物车列表数据
     async showTipGetList() {
       // 解构数据
-      const { openId } = this.data
+      const {openId} = this.data
 
       // 判断用户是否进行了登录
       if (!openId) {
@@ -221,7 +256,7 @@ ComponentWithStore({
     // 删除购物车中的商品
     async delCartGoods(event) {
       // 获取需要删除商品的 id
-      const { id } = event.currentTarget.dataset
+      const {id} = event.currentTarget.dataset
 
       // 询问用户是否删除该商品
       const modalRes = await wx.modal({
@@ -233,7 +268,7 @@ ComponentWithStore({
           // 调用 deleteCart 云函数来删除商品
           const res = await wx.cloud.callFunction({
             name: 'deleteCart', // 替换为你的云函数名称
-            data: { id } // 传递商品的 id
+            data: {id} // 传递商品的 id
           });
 
           // 检查云函数返回的结果

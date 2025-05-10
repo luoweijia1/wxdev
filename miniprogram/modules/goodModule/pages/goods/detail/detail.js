@@ -1,4 +1,3 @@
-import {reqAddCart} from '@/api/cart'
 // 导入创建的 behavior
 import {userBehavior} from '../../../behaviors/userBehavior'
 
@@ -62,9 +61,14 @@ Page({
     // 如果 buyNow === 0，说明是加入购物车，
     // 如果 buyNow === 1，说明是立即购买
     if (buyNow === 0) {
-      const res = await reqAddCart({goodsId, count, blessing})
+      // 如果购买数量发生了改变，需要调用接口，传递差值
+      const res = await wx.cloud.callFunction({
+        name: 'addCart', // 替换为你的云函数名称
+        data: {goodsId: id, count: disCount} // 传递商品的 id 和数量
+      });
 
-      if (res.code === 200) {
+      // 如果服务器更新购买数量成功，需要更新本地的购买数量
+      if (res.result && res.result.success) {
         wx.toast({title: '加入购物车成功'})
 
         // 在加入购物车成功以后，需要重新计算购物车商品的购买数量

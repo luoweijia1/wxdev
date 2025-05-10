@@ -1,18 +1,11 @@
-import {
-  reqOrderAddress,
-  reqOrderInfo,
-  reqBuyNowGoods,
-  reqSubmitOrder,
-  reqPrePayInfo,
-  reqPayStatus
-} from '../../../api/orderpay'
+import {reqPayStatus, reqPrePayInfo, reqSubmitOrder} from '../../../api/orderpay'
 // 导入 async-validator 对参数进行验证
 import Schema from 'async-validator'
 // 导入格式化时间的方法
-import { formatTime } from '../../../utils/formatTime'
+import {formatTime} from '../../../utils/formatTime'
 
 // 导入防抖函数
-import { debounce } from 'miniprogram-licia'
+import {debounce} from 'miniprogram-licia'
 
 // 获取应用实例
 const app = getApp()
@@ -52,7 +45,7 @@ Page({
     }
 
     // 对请求参数进行验证
-    const { valid } = await this.validatorPerson(params)
+    const {valid} = await this.validatorPerson(params)
 
     // 如果请求参数验证失败，直接 return ，不执行后续的逻辑
     if (!valid) return
@@ -121,14 +114,14 @@ Page({
         message: '请选择收货地址'
       },
       buyName: [
-        { required: true, message: '请输入订购人姓名' },
-        { pattern: nameRegExp, message: '订购人姓名不合法' }
+        {required: true, message: '请输入订购人姓名'},
+        {pattern: nameRegExp, message: '订购人姓名不合法'}
       ],
       buyPhone: [
-        { required: true, message: '请输入订购人手机号' },
-        { pattern: phoneReg, message: '订购人手机号不合法' }
+        {required: true, message: '请输入订购人手机号'},
+        {pattern: phoneReg, message: '订购人手机号不合法'}
       ],
-      deliveryDate: { required: true, message: '请选择送达日期' }
+      deliveryDate: {required: true, message: '请选择送达日期'}
     }
 
     // 传入验证规则进行实例化
@@ -140,12 +133,12 @@ Page({
       validator.validate(params, (errors) => {
         if (errors) {
           // 如果验证失败，需要给用户进行提示
-          wx.toast({ title: errors[0].message })
+          wx.toast({title: errors[0].message})
           // 如果属性值是 false，说明验证失败
-          resolve({ valid: false })
+          resolve({valid: false})
         } else {
           // 如果属性值是 true，说明验证成功
-          resolve({ valid: true })
+          resolve({valid: true})
         }
       })
     })
@@ -206,7 +199,34 @@ Page({
     }
 
     // 如果全局共享的 address 中没有数据，就需要调用接口获取收货地址数据进行渲染
-    const { data: orderAddress } = await reqOrderAddress()
+    try {
+      // 调用 getAddressDetail 云函数来获取订单地址
+      const res = await wx.cloud.callFunction({
+        name: 'getAddressDetail', // 替换为你的云函数名称
+        data: {openId} // 传递 openId 作为参数
+      });
+
+      // 检查云函数返回的结果
+      if (res.result && res.result.success) {
+        const orderAddress = res.result.data;
+        // 处理订单地址数据
+        this.setData({
+          orderAddress
+        });
+      } else {
+        wx.showToast({
+          title: '获取地址失败',
+          icon: 'none'
+        });
+      }
+    } catch (error) {
+      // 捕获并处理调用云函数时的错误
+      wx.showToast({
+        title: '获取地址失败',
+        icon: 'none'
+      });
+      console.error('Error calling getAddressDetail:', error);
+    }
 
     this.setData({
       orderAddress
@@ -215,20 +235,38 @@ Page({
 
   // 获取订单详情数据
   async getOrderInfo() {
-    const { goodsId, blessing } = this.data
+    const {goodsId, blessing} = this.data
 
-    const { data: orderInfo } = goodsId
-      ? await reqBuyNowGoods({ goodsId, blessing })
-      : await reqOrderInfo()
+    try {
+      // 调用 getOrderInfo 云函数
+      const res = await wx.cloud.callFunction({
+        name: 'getOrderInfo', // 替换为你的云函数名称
+        data: {goodsId, openId} // 传递 goodsId 和 openId
+      });
 
-    // 判断是否存在祝福语
-    // 如果需要购买的是多个商品，筛选第一个存在祝福语的商品进行赋值
-    const orderGoods = orderInfo.cartVoList.find((item) => item.blessing !== '')
+      // 检查云函数返回的结果
+      if (res.result && res.result.success) {
+        const orderInfo = res.result.data;
+        const orderGoods = orderInfo.cartVoList.find((item) => item.blessing !== '')
 
-    this.setData({
-      orderInfo,
-      blessing: !orderGoods ? '' : orderGoods.blessing
-    })
+        this.setData({
+          orderInfo,
+          blessing: !orderGoods ? '' : orderGoods.blessing
+        })
+      } else {
+        wx.showToast({
+          title: '获取订单信息失败',
+          icon: 'none'
+        });
+      }
+    } catch (error) {
+      // 捕获并处理调用云函数时的错误
+      wx.showToast({
+        title: '获取订单信息失败',
+        icon: 'none'
+      });
+      console.error('Error calling getOrderInfo:', error);
+    }
   },
 
   // 在页面加载的时候触发
