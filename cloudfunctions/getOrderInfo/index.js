@@ -37,7 +37,7 @@ exports.main = async (event, context) => {
 
       totalAmount = goods.price
       totalCount = 1
-    } else if (openId) {
+    } else {
       // 如果没有传入 goodsId，通过 openId 从 cart 集合中获取商品信息
       const cartRes = await cartCollection.where({
         openId: openId,

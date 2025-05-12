@@ -6,22 +6,25 @@ cloud.init()
 
 // 获取数据库实例
 const db = cloud.database()
-const commodityCollection = db.collection('goods')
+// 获取 order 集合
+const orderCollection = db.collection('order')
 
 // 云函数入口函数
 exports.main = async (event, context) => {
-  const { categoryId } = event
+  const { orderId } = event
 
   try {
-    // 查询商品集合，匹配 categoryId 或 categoryId
-    const res = await commodityCollection.where({
-      categoryId: categoryId
-    }).get()
+    // 更新 orderStatus 字段为 1
+    const res = await orderCollection.doc(orderId).update({
+      data: {
+        orderStatus: 1
+      }
+    })
 
-    // 返回查询结果
+    // 返回更新结果
     return {
       success: true,
-      data: res.data
+      updated: res.stats.updated // 返回更新的记录数
     }
   } catch (error) {
     // 返回错误信息

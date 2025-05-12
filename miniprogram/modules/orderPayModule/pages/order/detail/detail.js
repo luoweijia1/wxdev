@@ -1,4 +1,3 @@
-import {reqPayStatus, reqPrePayInfo, reqSubmitOrder} from '../../../api/orderpay'
 // 导入 async-validator 对参数进行验证
 import Schema from 'async-validator'
 // 导入格式化时间的方法
@@ -50,52 +49,68 @@ Page({
     // 如果请求参数验证失败，直接 return ，不执行后续的逻辑
     if (!valid) return
 
-    // 调用接口，创建平台订单
-    const res = await reqSubmitOrder(params)
+    // 调用云函数，创建平台订单
+    wx.cloud.callFunction({
+      name: 'createOrder',
+      data: params,
+      success: res => {
+        if (res.result.code === 200) {
+          // 在平台订单创建成功以后，需要将服务器、后端返回的订单编号挂载到页面实例上
+          this.orderNo = res.result.data
 
-    if (res.code === 200) {
-      // 在平台订单创建成功以后，需要将服务器、后端返回的订单编号挂载到页面实例上
-      this.orderNo = res.data
-
-      // 获取预付单信息、支付参数
-      this.advancePay()
-    }
+          // 获取预付单信息、支付参数
+          this.advancePay()
+        } else {
+          console.error('订单创建失败', res.result.message)
+        }
+      },
+      fail: err => {
+        console.error('调用订单创建云函数失败', err)
+      }
+    })
   }, 500),
 
   // 获取预付单信息、支付参数
   async advancePay() {
     try {
-      const payParams = await reqPrePayInfo(this.orderNo)
+      // 调用云函数，获取预支付信息
+      const prePayRes = await wx.cloud.callFunction({
+        name: 'getPrePayInfo',
+        data: {orderNo: this.orderNo}
+      });
 
-      if (payParams.code === 200) {
-        // payParams.data 就是获取的支付参数
+      if (prePayRes.result.code === 200) {
+        // prePayRes.result.data 就是获取的支付参数
 
-        // 调用  wx.requestPayment 发起微信支付
-        const payInfo = await wx.requestPayment(payParams.data)
+        // 调用 wx.requestPayment 发起微信支付
+        const payInfo = await wx.requestPayment(prePayRes.result.data);
 
         // 获取支付的结果
         if (payInfo.errMsg === 'requestPayment:ok') {
-          // 查询支付的状态
-          const payStatus = await reqPayStatus(this.orderNo)
+          // 调用云函数，更新支付状态
+          const payStatusRes = await wx.cloud.callFunction({
+            name: 'updateOrderStatus',
+            data: {orderNo: this.orderNo}
+          });
 
-          if (payStatus.code === 200) {
+          if (payStatusRes.result.code === 200) {
             wx.redirectTo({
               url: '/modules/orderPayModule/pages/order/list/list',
               success: () => {
-                wx.toast({
+                wx.showToast({
                   title: '支付成功',
                   icon: 'success'
-                })
+                });
               }
-            })
+            });
           }
         }
       }
     } catch (error) {
-      wx.toast({
+      wx.showToast({
         title: '支付失败',
         icon: 'error'
-      })
+      });
     }
   },
 

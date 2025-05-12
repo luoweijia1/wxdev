@@ -9,37 +9,36 @@ Page({
 
   // 获取首页数据
   async getIndexData() {
-    const bannerRes = await wx.cloud.callFunction({
-      name: 'getListData',
-      data: { type: 'banner' } // 假设传入 type 参数来区分不同的数据请求
-    });
+    try {
+      // 调用 listHomePage 云函数来获取所有数据
+      const res = await wx.cloud.callFunction({
+        name: 'listHomePage' // 替换为你的云函数名称
+      });
 
-    const bannerList = bannerRes.result && bannerRes.result.success ? bannerRes.result.data : [];
-
-    // 调用云函数获取 categoryList
-    const categoryRes = await wx.cloud.callFunction({
-      name: 'getListData',
-      data: { type: 'category' }
-    });
-
-    const categoryList = categoryRes.result && categoryRes.result.success ? categoryRes.result.data : [];
-
-    // 调用云函数获取 advertiseList
-    const advertiseRes = await wx.cloud.callFunction({
-      name: 'getListData',
-      data: { type: 'advertise' }
-    });
-
-    const advertiseList = advertiseRes.result && advertiseRes.result.success ? advertiseRes.result.data : [];
-
-
-    // 需要对数据进行赋值，在赋值的时候，一定要注意索引
-    this.setData({
-      bannerList: bannerList,
-      categoryList: categoryList,
-      advertiseList: advertiseList,
-      loading: false
-    })
+      // 检查云函数返回的结果
+      if (res.result && res.result.success) {
+        const { bannerList, categoryList, advertiseList } = res.result.data;
+        // 需要对数据进行赋值
+        this.setData({
+          bannerList,
+          categoryList,
+          advertiseList,
+          loading: false
+        });
+      } else {
+        wx.showToast({
+          title: '获取数据失败',
+          icon: 'none'
+        });
+      }
+    } catch (error) {
+      // 捕获并处理调用云函数时的错误
+      wx.showToast({
+        title: '获取数据失败',
+        icon: 'none'
+      });
+      console.error('Error calling listHomePage:', error);
+    }
   },
 
   // 监听页面的加载
