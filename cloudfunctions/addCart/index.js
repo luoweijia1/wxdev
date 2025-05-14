@@ -17,28 +17,55 @@ exports.main = async (event, context) => {
     // 获取当前时间
     const lastUpdateTime = new Date().toISOString()
 
-    // 构建购物车数据
-    const cartData = {
-      openId,
-      goodsId,
-      count,
-      lastUpdateTime,
-      blessing,
-      isChecked,
-      name,
-      price,
-      imageUrl
-    }
+    // 查询是否已存在相同 openId 和 goodsId 的记录
+    const queryResult = await cartCollection.where({
+      openId: openId,
+      goodsId: goodsId
+    }).get()
 
-    // 将购物车数据存入 cart 集合
-    const res = await cartCollection.add({
-      data: cartData
-    })
+    if (queryResult.data.length > 0) {
+      // 如果存在，更新 count 字段
+      const existingData = queryResult.data[0]
+      const newCount = existingData.count + count
 
-    // 返回添加结果
-    return {
-      success: true,
-      data: res._id // 返回新添加记录的 ID
+      // 更新记录
+      await cartCollection.doc(existingData._id).update({
+        data: {
+          count: newCount,
+          lastUpdateTime: lastUpdateTime
+        }
+      })
+
+      // 返回更新结果
+      return {
+        success: true,
+        message: '更新成功',
+        data: existingData._id
+      }
+    } else {
+      // 如果不存在，新增一条记录
+      const cartData = {
+        openId,
+        goodsId,
+        count,
+        lastUpdateTime,
+        blessing,
+        isChecked,
+        name,
+        price,
+        imageUrl
+      }
+
+      const res = await cartCollection.add({
+        data: cartData
+      })
+
+      // 返回添加结果
+      return {
+        success: true,
+        message: '添加成功',
+        data: res._id
+      }
     }
   } catch (error) {
     // 返回错误信息
