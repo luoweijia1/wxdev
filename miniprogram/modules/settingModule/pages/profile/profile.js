@@ -15,18 +15,23 @@ Page({
   // 更新用户信息
   async updateUserInfo() {
     // 调用云函数 更新fileID
-    // const res = await reqUpdateUserInfo(this.data.userInfo)
+    await wx.cloud.callFunction({
+      name: 'updateUserInfo',
+      data: {
+        id : this.data.userInfo._id,
+        nickname: this.data.userInfo.nickname,
+        fileID: this.data.userInfo.fileID,
+      }
+    });
+    
+    // 用户信息更新成功以后，需要将最新的用户信息存储到本地
+    setStorage('userInfo', this.data.userInfo)
 
-    if (res.code === 200) {
-      // 用户信息更新成功以后，需要将最新的用户信息存储到本地
-      setStorage('userInfo', this.data.userInfo)
+    // 用户信息更新成功以后，同时同步到 Store
+    this.setUserInfo(this.data.userInfo)
 
-      // 用户信息更新成功以后，同时同步到 Store
-      this.setUserInfo(this.data.userInfo)
-
-      // 给用户进行提示
-      toast({title: '用户信息更新成功'})
-    }
+    // 给用户进行提示
+    toast({title: '用户信息更新成功'})
   },
 
   // 更新用户头像
@@ -36,14 +41,16 @@ Page({
     // 获取头像的临时路径
     const {avatarUrl} = event.detail
 
-    try {
-      console.log(this.data.userInfo);
+    this.setData({
+      'userInfo.avatarUrl': avatarUrl
+    })
 
+    try {
       // 将 wx.cloud.uploadFile 封装为 Promise
       const uploadPromise = new Promise((resolve, reject) => {
         wx.cloud.uploadFile({
           cloudPath: 'avatar/' + this.data.userInfo._openid + '.png',
-          filePath: avatarUrl,
+          filePath: this.data.userInfo.avatarUrl,
           success: res => resolve(res),
           fail: err => reject(err)
         });
@@ -51,19 +58,17 @@ Page({
 
       // 使用 await 等待上传完成
       const res = await uploadPromise;
-      console.log('文件上传成功，fileID:', res.fileID);
+      this.data.userInfo.fileID =  res.fileID;
 
     } catch (error) {
-      console.error('调用云函数出错：', error)
+      console.error('文件上传出错', error)
     }
   },
 
   // 获取用户昵称
   getNickName(event) {
-    // console.log(event.detail.value)
     // 解构最新的用户昵称
     const {nickname} = event.detail.value
-    // console.log(nickname)
     this.setData({
       'userInfo.nickname': nickname,
       isShowPopup: false
@@ -83,5 +88,43 @@ Page({
     this.setData({
       isShowPopup: false
     })
-  }
+  },
+
+  // 处理图像加载失败的情况
+  handleImageError: function (event) {
+    const fileID = event.target.dataset.fileId; // 获取 fileID
+
+    // 调用 getTmpUrl 方法获取新的 URL
+    this.getTmpUrl(fileID, newUrl => {
+      // 检查 newUrl 是否有效
+      if (newUrl) {
+        // 更新对应 item 的 imageUrl
+        this.setData({
+          'userInfo.avatarUrl': newUrl
+        })
+      } else {
+        console.error('Failed to get new image URL');
+      }
+    });
+  },
+
+  // 获取临时文件 URL 的方法
+  getTmpUrl: function (fileID, callback) {
+    wx.cloud.getTempFileURL({
+      fileList: [fileID],
+      success: res => {
+        if (res.fileList && res.fileList.length > 0) {
+          const tempFileURL = res.fileList[0].tempFileURL;
+          callback(tempFileURL);
+          console.log('New temp URL:', tempFileURL);
+        } else {
+          console.error('Failed to get temp URL');
+        }
+      },
+      fail: error => {
+        console.error('Error getting temp file URL:', error);
+        // 可以在这里添加更多的错误处理逻辑，例如显示默认图片
+      }
+    });
+  },
 })

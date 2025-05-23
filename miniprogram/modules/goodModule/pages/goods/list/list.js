@@ -22,10 +22,12 @@ Page({
     // 发送请求
     try {
       // 调用 listGoods 云函数来获取商品列表
+      console.log("req:" + this.data.requestData.categoryId)
       const res = await wx.cloud.callFunction({
         name: 'listGoods',
         data: this.data.requestData // 传递请求参数
       });
+      console.log("res:" + res.result.data)
 
       // 检查云函数返回的结果
       if (res.result && res.result.success) {
@@ -45,11 +47,6 @@ Page({
 
     // 在请求结束以后，需要将 isLoading 设置为 false，表示请求已经结束
     this.data.isLoading = false
-
-    this.setData({
-      goodsList: [...this.data.goodsList, ...data.records],
-      total: data.total
-    })
   },
 
   // 监听到页面的上拉操作

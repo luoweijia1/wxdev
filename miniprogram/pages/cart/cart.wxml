@@ -25,7 +25,7 @@
               ></van-checkbox>
             </view>
             <view class="mid">
-              <image class="img" src="{{ item.imageUrl }}" />
+              <image class="img" src="{{ item.imageUrl }}" binderror="handleImageError" data-index="{{index}}" data-file-id="{{item.fileID}}"/>
             </view>
             <view class="right">
               <view class="title"> {{ item.name }} </view>
@@ -54,7 +54,7 @@
           slot="right"
           class="van-swipe-cell__right"
           bindtap="delCartGoods"
-          data-id="{{ item.goodsId }}"
+          data-id="{{ item._id }}"
           >删除</view
         >
       </van-swipe-cell>

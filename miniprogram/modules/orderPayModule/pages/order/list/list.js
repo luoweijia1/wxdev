@@ -1,3 +1,4 @@
+import {userStore} from '@/stores/userstore'
 Page({
   // 页面的初始数据
   data: {
@@ -12,6 +13,7 @@ Page({
   async getOrderList() {
     // 解构获取数据
     const {page, limit} = this.data
+    console.log(page)
 
     // 数据正在请求中
     this.data.isLoading = true
@@ -20,32 +22,31 @@ Page({
     try {
       const res = await wx.cloud.callFunction({
         name: 'listOrder',
-        data: {page, limit} // 传递请求参数
+        data: {
+          openId: userStore.openId,
+          page: page,
+          limit: limit
+        } // 传递请求参数
       });
+      
+      // 数据加载完毕
+      this.data.isLoading = false
 
       // 检查云函数返回的结果
       if (res.result && res.result.success) {
-        // 将商品列表数据进行赋值
         this.setData({
-          goodsList: res.result.data
-        });
+          orderList: [...this.data.orderList, ...res.result.data],
+          total: res.result.total
+        })
       } else {
         // 处理错误情况，例如显示错误提示
-        toast({title: '获取商品列表失败'})
+        wx.toast({title: '获取商品列表失败'})
       }
     } catch (error) {
       // 捕获并处理调用云函数时的错误
-      toast({title: '获取商品列表失败'})
+      wx.toast({title: '获取商品列表失败'})
       console.error('Error calling listGoods:', error);
     }
-
-    // 数据加载完毕
-    this.data.isLoading = false
-
-    this.setData({
-      orderList: [...this.data.orderList, ...res.data.records],
-      total: res.data.total
-    })
   },
 
   // 页面上拉触底事件的处理函数

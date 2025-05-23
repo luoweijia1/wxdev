@@ -46,10 +46,31 @@ ComponentWithStore({
 
     // 处理登录成功
     handleLoginSuccess(data) {
+      if (data.fileID) {
+        wx.cloud.getTempFileURL({
+          fileList: [data.fileID], // 替换为实际的文件 ID 数组
+          success: res => {
+            // 检查 res.fileList 是否存在且不为空
+            if (res.fileList && res.fileList.length > 0) {
+              data.avatarUrl = res.fileList[0].tempFileURL
+              setStorage('userInfo', data);
+              this.setUserInfo(data);
+            } else {
+              setStorage('userInfo', data);
+              this.setUserInfo(data);
+            }
+          },
+          fail: err => {
+            console.error('获取临时文件 URL 失败:', err);
+          }
+        });
+      } else {
+        setStorage('userInfo', data);
+        this.setUserInfo(data);
+      } 
+      
       setStorage('openId', data._openid);
       this.setOpenId(data._openid);
-      setStorage('userInfo', data);
-      this.setUserInfo(data);
     }
   }
 });

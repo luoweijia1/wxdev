@@ -13,7 +13,7 @@ App({
   onLaunch: function () {
     // 初始化云开发环境
     wx.cloud.init({
-      env: 'cloudbase-4gv3nl6wa7c92e84', // 替换为你的云开发环境 ID
+      env: 'cloud1-7gbw9az160af6472', // 替换为你的云开发环境 ID
       traceUser: true, // 是否在将用户访问记录到用户管理中，在控制台中可见
     });
   },

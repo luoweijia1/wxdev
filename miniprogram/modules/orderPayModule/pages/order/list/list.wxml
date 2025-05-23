@@ -3,7 +3,7 @@
   <view class="order-list" wx:if="{{ orderList.length > 0 }}">
     <view class="order-item" wx:for="{{ orderList }}" wx:key="index">
       <view class="order-item-header list-flex">
-        <view class="orderno">订单号<text class="no">{{ orderList.orderNo }}</text></view>
+        <view class="orderno">订单号<text class="no">{{ item.orderNo }}</text></view>
         <view class="order-status {{ item.orderStatus === 1 ? 'order-active' : '' }}">
           {{ item.orderStatus === 1 ? '已支付' : '未支付'}}
         </view>

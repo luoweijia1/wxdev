@@ -5,6 +5,7 @@ import {formatTime} from '../../../utils/formatTime'
 
 // 导入防抖函数
 import {debounce} from 'miniprogram-licia'
+import {userStore} from '@/stores/userstore'
 
 // 获取应用实例
 const app = getApp()
@@ -32,15 +33,15 @@ Page({
       orderAddress,
       orderInfo
     } = this.data
-
+    
     // 需要根据接口要求组织请求参数
     const params = {
+      totalAmount: orderInfo.totalAmount,
       buyName,
       buyPhone,
       cartList: orderInfo.cartVoList,
       deliveryDate,
-      remarks: blessing,
-      userAddressId: orderAddress.id
+      userAddressId: orderAddress._id
     }
 
     // 对请求参数进行验证
@@ -54,12 +55,12 @@ Page({
       name: 'createOrder',
       data: params,
       success: res => {
-        if (res.result.code === 200) {
+        if (res.result.success) {
           // 在平台订单创建成功以后，需要将服务器、后端返回的订单编号挂载到页面实例上
-          this.orderNo = res.result.data
+          this.orderNo = res.result.orderId
 
           // 获取预付单信息、支付参数
-          this.advancePay()
+          this.advancePay(this.orderNo)
         } else {
           console.error('订单创建失败', res.result.message)
         }
@@ -71,47 +72,36 @@ Page({
   }, 500),
 
   // 获取预付单信息、支付参数
-  async advancePay() {
-    try {
-      // 调用云函数，获取预支付信息
-      const prePayRes = await wx.cloud.callFunction({
-        name: 'getPrePayInfo',
-        data: {orderNo: this.orderNo}
-      });
-
-      if (prePayRes.result.code === 200) {
-        // prePayRes.result.data 就是获取的支付参数
-
-        // 调用 wx.requestPayment 发起微信支付
-        const payInfo = await wx.requestPayment(prePayRes.result.data);
-
-        // 获取支付的结果
-        if (payInfo.errMsg === 'requestPayment:ok') {
-          // 调用云函数，更新支付状态
-          const payStatusRes = await wx.cloud.callFunction({
-            name: 'updateOrderStatus',
-            data: {orderNo: this.orderNo}
-          });
-
-          if (payStatusRes.result.code === 200) {
-            wx.redirectTo({
-              url: '/modules/orderPayModule/pages/order/list/list',
-              success: () => {
-                wx.showToast({
-                  title: '支付成功',
-                  icon: 'success'
-                });
-              }
-            });
-          }
-        }
-      }
-    } catch (error) {
-      wx.showToast({
-        title: '支付失败',
-        icon: 'error'
-      });
-    }
+  async advancePay(orderNo) {
+    wx.cloud.callFunction({
+      // 云函数名称
+      name: 'wxpayFunctions',
+      data: {
+        // 调用云函数中的下单方法
+        type: 'wxpay_order',
+        outTradeNo: orderNo
+      },
+      success: (res) => {
+        console.log('下单结果: ', res);
+        const paymentData = res.result?.data;
+        // 唤起微信支付组件，完成支付
+        wx.requestPayment({
+          timeStamp: paymentData?.timeStamp,
+          nonceStr: paymentData?.nonceStr,
+          package: paymentData?.packageVal,
+          paySign: paymentData?.paySign,
+          signType: 'RSA', // 该参数为固定值
+          success(res) {
+            // 支付成功回调，实现自定义的业务逻辑
+            console.log('唤起支付组件成功：', res);
+          },
+          fail(err) {
+            // 支付失败回调
+            console.error('唤起支付组件失败：', err);
+          },
+        });
+      },
+    });
   },
 
   // 对收货人、订购人信息进行验证
@@ -203,7 +193,8 @@ Page({
   async getAddress() {
     // 判断全局共享的 address 中是否存在数据，
     // 如果存在数据，就需要从全局共享的 address 中取到数据进行赋值
-    const addressId = app.globalData.address.id
+    const addressId = app.globalData.address._id
+    console.log(addressId)
 
     if (addressId) {
       this.setData({
@@ -218,7 +209,7 @@ Page({
       // 调用 getAddressDetail 云函数来获取订单地址
       const res = await wx.cloud.callFunction({
         name: 'getAddressDetail', // 替换为你的云函数名称
-        data: {openId} // 传递 openId 作为参数
+        data: {openId: userStore.openId}
       });
 
       // 检查云函数返回的结果
@@ -242,10 +233,6 @@ Page({
       });
       console.error('Error calling getAddressDetail:', error);
     }
-
-    this.setData({
-      orderAddress
-    })
   },
 
   // 获取订单详情数据
@@ -256,7 +243,10 @@ Page({
       // 调用 getOrderInfo 云函数
       const res = await wx.cloud.callFunction({
         name: 'getOrderInfo', // 替换为你的云函数名称
-        data: {goodsId, openId} // 传递 goodsId 和 openId
+        data: {
+          goodsId: goodsId, 
+          openId: userStore.openId
+        } 
       });
 
       // 检查云函数返回的结果

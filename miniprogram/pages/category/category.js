@@ -23,7 +23,7 @@ Page({
       });
 
       // 检查云函数返回的结果
-      if (res.result && res.result.success) {
+      if (res.result.success) {
         this.setData({
           categoryList: res.result.data
         })

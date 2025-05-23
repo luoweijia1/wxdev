@@ -1,6 +1,8 @@
 // 导入创建的 behavior
 import {userBehavior} from '../../../behaviors/userBehavior'
 
+import {userStore} from '@/stores/userstore'
+
 Page({
   behaviors: [userBehavior],
 
@@ -45,12 +47,13 @@ Page({
   // 弹框的确定按钮触发的事件处理函数
   async handlerSubmit() {
     // 解构相关的数据
-    const {openId, count, blessing, buyNow} = this.data
+    console.log("data:" + this.data)
+    const {count, blessing, buyNow} = this.data
     // 获取商品的 id
-    const goodsId = this.goodsId
+    const goodsId = this.data.goodsInfo._id
 
     // 判断用户是否进行了登录，如果没有登录，需要跳转到登录页面
-    if (!openId) {
+    if (!userStore.openId) {
       wx.navigateTo({
         url: '/pages/login/login'
       })
@@ -64,7 +67,16 @@ Page({
       // 如果购买数量发生了改变，需要调用接口，传递差值
       const res = await wx.cloud.callFunction({
         name: 'addCart', // 替换为你的云函数名称
-        data: {goodsId: id, count: disCount} // 传递商品的 id 和数量
+        data: {
+          openId: userStore.openId, 
+          goodsId: goodsId, 
+          count: count,
+          isChecked: 1,
+          name: this.data.goodsInfo.name,
+          fileID: this.data.goodsInfo.fileID,
+          price: this.data.goodsInfo.price,
+          imageUrl: this.data.goodsInfo.imageUrl
+        } // 传递商品的 id 和数量
       });
 
       // 如果服务器更新购买数量成功，需要更新本地的购买数量
@@ -109,28 +121,25 @@ Page({
         });
       } else {
         // 处理错误情况，例如显示错误提示
-        toast({title: '获取商品信息失败'})
+        wx.toast({title: '获取商品信息失败'})
       }
     } catch (error) {
       // 捕获并处理调用云函数时的错误
-      toast({title: '获取商品信息失败'})
+      wx.toast({title: '获取商品信息失败'})
       console.error('Error calling getGoodDetail:', error);
     }
   },
 
   // 计算购物车商品的数量
   async getCartCount() {
-    // 使用 openId 来判断用户是否进行了登录，
-    // 如果没有 openId，说明用户没有登录，就不执行后续的逻辑
-    if (!this.data.openId) return
+    if (!userStore.openId) return
 
-    // 如果存在 openId，说明用户进行了登录，获取购物车列表的数据
     // 然后计算得出购买的数量
     try {
       // 调用 listCarts 云函数来获取购物车列表
       const res = await wx.cloud.callFunction({
         name: 'listCarts',
-        data: {} // 如果需要传递参数，可以在这里添加
+        data: {"openId": userStore.openId} // 如果需要传递参数，可以在这里添加
       });
 
       // 检查云函数返回的结果
@@ -139,31 +148,66 @@ Page({
         this.setData({
           cartList: res.result.data
         });
+      // 判断购物车中是否存在商品
+      if (res.result.data.length !== 0) {
+        // 累加得出的商品购买数量
+        let allCount = 0
+
+        res.result.data.forEach((item) => {
+          allCount += item.count
+        })
+
+        this.setData({
+          // info 属性的属性值要求是 字符串类型
+          // 而且如果购买的数量大于 99，页面上需要展示 99+
+          allCount: (allCount > 99 ? '99+' : allCount) + ''
+        })
+      }
       } else {
         // 处理错误情况，例如显示错误提示
-        toast({title: '获取购物车列表失败'})
+        wx.toast({title: '获取购物车列表失败'})
       }
     } catch (error) {
       // 捕获并处理调用云函数时的错误
-      toast({title: '获取购物车列表失败'})
+      wx.toast({title: '获取购物车列表失败'})
       console.error('Error calling listCarts:', error);
     }
+  },
 
-    // 判断购物车中是否存在商品
-    if (res.data.length !== 0) {
-      // 累加得出的商品购买数量
-      let allCount = 0
+  // 处理图像加载失败的情况
+  handleImageError: function (event) {
+    const fileID = event.target.dataset.fileId; // 获取 fileID
 
-      res.data.forEach((item) => {
-        allCount += item.count
-      })
+    // 调用 getTmpUrl 方法获取新的 URL
+    this.getTmpUrl(fileID, newUrl => {
+      // 检查 newUrl 是否有效
+      if (newUrl) {
+        this.setData({
+          "goodsInfo.imageUrl": newUrl
+        });
+      } else {
+        console.error('Failed to get new image URL');
+      }
+    });
+  },
 
-      this.setData({
-        // info 属性的属性值要求是 字符串类型
-        // 而且如果购买的数量大于 99，页面上需要展示 99+
-        allCount: (allCount > 99 ? '99+' : allCount) + ''
-      })
-    }
+  // 获取临时文件 URL 的方法
+  getTmpUrl: function (fileID, callback) {
+    wx.cloud.getTempFileURL({
+      fileList: [fileID],
+      success: res => {
+        if (res.fileList && res.fileList.length > 0) {
+          const tempFileURL = res.fileList[0].tempFileURL;
+          callback(tempFileURL);
+        } else {
+          console.error('Failed to get temp URL');
+        }
+      },
+      fail: error => {
+        console.error('Error getting temp file URL:', error);
+        // 可以在这里添加更多的错误处理逻辑，例如显示默认图片
+      }
+    });
   },
 
   onLoad(options) {

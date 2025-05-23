@@ -131,7 +131,7 @@ ComponentWithStore({
         // 调用 updateCartCheck 云函数来更新购物车中所有商品的选中状态
         const res = await wx.cloud.callFunction({
           name: 'updateCartCheck', // 替换为你的云函数名称
-          data: {isChecked} // 传递全选或全不选的状态
+          data: {"openId": userStore.openId, "isChecked": isChecked} // 传递全选或全不选的状态
         });
 
         // 检查云函数返回的结果
@@ -178,7 +178,7 @@ ComponentWithStore({
         // 调用 updateCartCheck 云函数来更新购物车商品的选中状态
         const res = await wx.cloud.callFunction({
           name: 'updateCartCheck', // 替换为你的云函数名称
-          data: {id, isChecked} // 传递商品的 id 和选中状态
+          data: {"goodsId": id, "openId": userStore.openId, "isChecked": isChecked} // 传递商品的 id 和选中状态
         });
 
         // 检查云函数返回的结果
@@ -226,7 +226,7 @@ ComponentWithStore({
         // 调用 listCarts 云函数来获取购物车列表
         const res = await wx.cloud.callFunction({
           name: 'listCarts', // 替换为你的云函数名称
-          data: {} // 如果云函数需要参数，可以在这里传递
+          data: {"openId": openId} // 如果云函数需要参数，可以在这里传递
         });
 
         // 检查云函数返回的结果
@@ -293,6 +293,46 @@ ComponentWithStore({
           console.error('Error calling deleteCart:', error);
         }
       }
+    },
+
+    // 处理图像加载失败的情况
+    handleImageError: function (event) {
+      const index = event.target.dataset.index; // 获取出错图片的索引
+      const fileID = event.target.dataset.fileId; // 获取 fileID
+  
+      // 调用 getTmpUrl 方法获取新的 URL
+      this.getTmpUrl(fileID, newUrl => {
+        // 检查 newUrl 是否有效
+        if (newUrl) {
+          // 更新对应 item 的 imageUrl
+          const cartList = this.data.cartList;
+          cartList[index].imageUrl = newUrl;
+          this.setData({
+            cartList: cartList
+          });
+        } else {
+          console.error('Failed to get new image URL');
+        }
+      });
+    },
+  
+    // 获取临时文件 URL 的方法
+    getTmpUrl: function (fileID, callback) {
+      wx.cloud.getTempFileURL({
+        fileList: [fileID],
+        success: res => {
+          if (res.fileList && res.fileList.length > 0) {
+            const tempFileURL = res.fileList[0].tempFileURL;
+            callback(tempFileURL);
+          } else {
+            console.error('Failed to get temp URL');
+          }
+        },
+        fail: error => {
+          console.error('Error getting temp file URL:', error);
+          // 可以在这里添加更多的错误处理逻辑，例如显示默认图片
+        }
+      });
     },
 
     // 如果使用 Component 方法来构建页面

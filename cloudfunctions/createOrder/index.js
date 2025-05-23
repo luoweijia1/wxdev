@@ -8,7 +8,7 @@ const db = cloud.database()
 // 云函数入口函数
 exports.main = async (event, context) => {
   const wxContext = cloud.getWXContext()
-  const { buyName, buyPhone, cartList, deliveryDate, totalAmout, userAddressId } = event
+  const { buyName, buyPhone, cartList, deliveryDate, totalAmount, userAddressId } = event
 
   try {
     // 1. 存储订单基本信息到 order 集合
@@ -17,7 +17,7 @@ exports.main = async (event, context) => {
         openId: wxContext.OPENID,
         buyName: buyName,
         buyPhone: buyPhone,
-        totalAmount: totalAmout,
+        totalAmount: totalAmount,
         deliveryDate: deliveryDate,
         userAddressId: userAddressId,
         createTime: new Date(),

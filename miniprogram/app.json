@@ -4,12 +4,11 @@
     "pages/category/category",
     "pages/cart/cart",
     "pages/my/my",
-    "pages/login/login",
-    "pages/test/test"
+    "pages/login/login"
   ],
   "window": {
     "backgroundTextStyle": "light",
-    "navigationBarBackgroundColor": "#f3514f",
+    "navigationBarBackgroundColor": "#8B4513",
     "navigationBarTitleText": "酵醒面包",
     "navigationBarTextStyle": "white"
   },

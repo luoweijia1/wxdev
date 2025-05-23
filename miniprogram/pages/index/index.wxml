@@ -18,15 +18,12 @@
     <!-- 广告区域 -->
     <view class="adver">
       <view class="adver-left">
-        <image src="{{ activeList[0].imageUrl }}" mode="widthFix" />
+        <image src="{{ advertiseList[0].imageUrl }}" mode="widthFix" binderror="handleImageError" data-index="{{0}}" data-file-id="{{advertiseList[0].fileID}}"></image>
       </view>
 
       <view class="adver-right">
         <view>
-          <image src="{{ activeList[1].imageUrl }}" mode="widthFix" />
-        </view>
-        <view>
-          <image src="{{ activeList[2].imageUrl }}" mode="widthFix" />
+          <image src="{{ advertiseList[1].imageUrl }}" mode="widthFix" binderror="handleImageError" data-index="{{1}}" data-file-id="{{advertiseList[1].fileID}}"></image>
         </view>
       </view>
     </view>

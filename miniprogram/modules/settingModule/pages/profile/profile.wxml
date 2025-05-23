@@ -9,7 +9,7 @@
         open-type="chooseAvatar"
         bindchooseavatar="chooseAvatar"
       >
-        <image src="{{ userInfo.avatarurl || '/assets/images/avatar.png' }}" />
+        <image src="{{ userInfo.avatarUrl || '/assets/images/avatar.png' }}" binderror="handleImageError" data-file-id="{{userInfo.fileID}}"/>
       </button>
     </view>
   </view>

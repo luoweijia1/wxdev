@@ -1,4 +1,5 @@
 import {swipeCellBehavior} from '@/behaviors/swipeCell'
+import { userStore } from '@/stores/userstore'
 
 // 获取应用实例
 const app = getApp()
@@ -23,10 +24,30 @@ Page({
 
     // 同时需要给用户提示，并且要重新获取收货地址列表
     if (modalRes) {
-      // 修改为云函数
-      // await reqDelAddress(id)
-      wx.toast({title: '收货地址删除成功'})
-      this.getAddressList()
+      wx.cloud.callFunction({
+        name: 'deleteAddress',
+        data: {
+          id: id
+        }
+      })
+      .then(res => {
+        if (res.result.success) {
+          wx.toast({
+            title: "地址删除成功"
+          })
+          this.getAddressList()
+        } else {
+          wx.showToast({
+            title: res.result.error
+          })
+        }
+      })
+      .catch(err => {
+        console.error('调用云函数出错:', err)
+        wx.showToast({
+          title: '调用云函数出错'
+        })
+      })
     }
   },
 
@@ -46,22 +67,24 @@ Page({
       // 调用 listAddress 云函数来获取地址列表
       const res = await wx.cloud.callFunction({
         name: 'listAddress',
-        data: {} // 如果需要传递参数，可以在这里添加
+        data: {
+          openId: userStore.openId
+        } // 如果需要传递参数，可以在这里添加
       });
 
       // 检查云函数返回的结果
-      if (res.result && res.result.success) {
+      if (res.result.success) {
         // 将地址列表数据进行赋值
         this.setData({
           addressList: res.result.data
         });
       } else {
         // 处理错误情况，例如显示错误提示
-        toast({title: '获取地址列表失败'})
+        wx.toast({title: '获取地址列表失败'})
       }
     } catch (error) {
       // 捕获并处理调用云函数时的错误
-      toast({title: '获取地址列表失败'})
+      wx.toast({title: '获取地址列表失败'})
       console.error('Error calling listAddress:', error);
     }
   },
@@ -76,7 +99,7 @@ Page({
     const addressId = event.currentTarget.dataset.id
 
     // 需要从收货地址列表中根据 收货地址 ID 查找到点击的收货地址详情、详细信息
-    const selectAddress = this.data.addressList.find((item) => item.id === addressId)
+    const selectAddress = this.data.addressList.find((item) => item._id === addressId)
 
     if (selectAddress) {
       // 如果获取收货地址成功以后，需要赋值给全局共享的数据

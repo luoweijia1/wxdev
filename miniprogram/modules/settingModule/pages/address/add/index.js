@@ -1,5 +1,6 @@
 // 导入 async-validator 对参数进行验证
 import Schema from 'async-validator'
+import { userStore } from '@/stores/userstore'
 
 // 建表字段如下，还有一个id
 Page({
@@ -27,6 +28,7 @@ Page({
     // 最终需要发送的请求参数
     const params = {
       ...this.data,
+      openId: userStore.openId,
       fullAddress: provinceName + cityName + districtName + address,
       isDefault: isDefault ? 1 : 0
     }
@@ -36,11 +38,11 @@ Page({
 
     // 如果 valid 等于 false，说明验证失败，就不执行后续的逻辑
     if (!valid) return
-
     // 如果 valid 等于 true，说明验证成功调用新增的接口实现新增收货地址功能
     let res;
     if (this.addressId) {
       // 调用 updateAddress 云函数
+      params.addressId = this.addressId
       res = await wx.cloud.callFunction({
         name: 'updateAddress',
         data: params
@@ -52,8 +54,9 @@ Page({
         data: params
       });
     }
+    console.log(res)
 
-    if (res.code === 200) {
+    if (res.result.success) {
       // 返回到收货地址列表页面
       wx.navigateBack({
         success: () => {
@@ -110,7 +113,7 @@ Page({
 
   // 省市区选择
   onAddressChange(event) {
-    // console.log(event)
+    console.log(event)
 
     // 解构省市区以及编码
     const [provinceName, cityName, districtName] = event.detail.value
@@ -147,16 +150,16 @@ Page({
       });
 
       // 检查云函数返回的结果
-      if (res.result && res.result.success) {
+      if (res.result.success) {
         // 将详情数据进行赋值，赋值以后，页面上就会回显要更新的地址信息
         this.setData(res.result.data);
       } else {
         // 处理错误情况，例如显示错误提示
-        toast({title: '获取地址信息失败'})
+        wx.toast({title: '获取地址信息失败'})
       }
     } catch (error) {
       // 捕获并处理调用云函数时的错误
-      toast({title: '获取地址信息失败'})
+      wx.toast({title: '获取地址信息失败'})
       console.error('Error calling getAddressDetail:', error);
     }
   },

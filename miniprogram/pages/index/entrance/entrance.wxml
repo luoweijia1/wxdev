@@ -8,9 +8,9 @@
     <!-- 导航链接 -->
     <navigator
       class="navigator-nav"
-      url="/modules/goodModule/pages/goods/list/list?categoryId={{item.id}}"
+      url="/modules/goodModule/pages/goods/list/list?categoryId={{item._id}}"
     >
-      <image class="nav-img" src="{{ item.imageUrl }}" />
+      <image class="nav-img" src="{{ item.imageUrl }}" binderror="handleImageError" data-index="{{index}}" data-file-id="{{item.fileID}}"/>
       <text class="nav-text">{{ item.name }}</text>
     </navigator>
   </view>

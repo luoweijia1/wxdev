@@ -3,7 +3,7 @@
   <!-- 收货地址区域 -->
   <view class="address-card">
     <!-- 添加收货地址 -->
-    <view wx:if="{{ !orderAddress.id }}" class="add-address" bindtap="toAddress">
+    <view wx:if="{{ !orderAddress._id }}" class="add-address" bindtap="toAddress">
       <van-icon size="22px" name="add" />
       <view>添加收货地址</view>
     </view>

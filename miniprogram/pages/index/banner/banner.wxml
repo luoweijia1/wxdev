@@ -15,14 +15,7 @@
     <block wx:for="{{ bannerList }}" wx:key="index">
       <!-- swiper-item 单个滑块视图容器，每一张轮播图 -->
       <swiper-item class="swiper-item">
-        <!-- 通过 navigator 组件实现页面的跳转 -->
-        <navigator
-          class="navigator"
-          url="/modules/goodModule/pages/goods/detail/detail?goodsId={{ item.id }}"
-          hover-class="none"
-        >
-          <image class="img" src="{{ item.imageUrl }}"></image>
-        </navigator>
+        <image class="img" src="{{ item.imageUrl }}" binderror="handleImageError" data-index="{{index}}" data-file-id="{{item.fileID}}"></image>
       </swiper-item>
     </block>
   </swiper>
